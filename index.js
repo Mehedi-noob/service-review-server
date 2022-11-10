@@ -22,40 +22,70 @@ async function run() {
         const reviewCollection = client.db('SNservice').collection('reviews');
 
         // services api
-        app.get('/services', async(req, res) =>{
+        app.get('/services', async (req, res) => {
             const query = {};
             const cursor = serviceCollection.find(query);
             const services = await cursor.toArray();
             res.send(services);
         });
 
-        app.get('/services/:id', async(req, res)=>{
+        app.get('/services/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const service = await serviceCollection.findOne(query);
             res.send(service);
         });
 
         // reviews api
-        app.get('/reviews', async(req, res)=>{
-            const query = {};
+        app.get('/reviews', async (req, res) => {
+            let query = {};
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+            if (req.query._id) {
+                query = {
+                    _id: ObjectId(req.query._id)
+                }
+            }
             const cursor = reviewCollection.find(query);
             const reviews = await cursor.toArray();
             res.send(reviews);
         });
 
-        app.post('/reviews', async(req, res)=>{
+        app.post('/reviews', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             res.send(result);
         });
 
-        app.get('/reviews/:id', async(req, res)=>{
+        app.get('/reviews/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {service: id};
+            const query = { service: id };
             const review = await reviewCollection.find(query).toArray();
             res.send(review);
         });
+
+        app.patch('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const upReview = req.body.review;
+            const query = { _id: ObjectId(id) };
+            const updatedCol = {
+                $set: {
+                    review: upReview
+                }
+            }
+            const result = await reviewCollection.updateOne(query, updatedCol);
+            res.send(result);
+        });
+
+        app.delete('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result);
+        })
 
     }
     finally {
